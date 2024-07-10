@@ -1,1 +1,1 @@
-./hangul.exe
+./eng_ipa.exe
