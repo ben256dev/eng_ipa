@@ -172,14 +172,14 @@ void process_input(WINDOW* win, ma_engine* sound_engine_ptr, int* quiz_flags, in
     if (*quiz_flags & QUIZ_FLAGS_SINGLE_KEY_MODE_BIT)
     {
             wmove(win, getmaxy(win) / 2 + 2, getmaxx(win) / 2);
-	    wrefresh(win);
-	    c = getch();
+	    c = wgetch(win);
             switch (c)
             {
 		    case KEY_RESIZE:
 			    return;
                     case ':':
-                	    mvwaddwstr(win, getmaxy(win) / 2 + 2, getmaxx(win) / 2 - 1, L":");
+                            mvwaddwstr(win, getmaxy(win) / 2 + 2, getmaxx(win) / 2 - 1, L": ");
+			    //wrefresh(win);
                 	    break;
 		    case 'f':
 		    case 'g':
