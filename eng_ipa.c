@@ -49,7 +49,7 @@
            └───┘           └───┘
 */
 
-// @quiz_flags
+// @quiz flags
 #define QUIZ_FLAGS_SHOW_IPA_KEY_BIT    1
 #define QUIZ_FLAGS_SHOW_OPTIONS_BIT    2
 #define QUIZ_FLAGS_SINGLE_KEY_MODE_BIT 4
@@ -63,7 +63,8 @@ typedef struct vowel {
 } vowel;
 
 // @vowels
-#define VOWEL_COUNT 15
+#define VOWEL_COUNT          15
+#define VOWEL_FIRST_DIPTHONG 10
 const vowel ipa_vowels[VOWEL_COUNT] = {
     { L"ə", "of", "of.mp3", 'f' },
     { L"ɹ", "work", "work.mp3", 'g' },
@@ -82,7 +83,7 @@ const vowel ipa_vowels[VOWEL_COUNT] = {
     { L"ɔɪ", "point", "point.mp3", 'i' },
 };
 
-// @vowel_exists
+// @vowel exists
 int vowel_exists(char* user_string)
 {
     for (int i = 0; i < 15; i++)
@@ -93,7 +94,7 @@ int vowel_exists(char* user_string)
     return 0;
 }
 
-// @print_original
+// @print original
 void print_original(WINDOW* win, int quiz_flags)
 {
     box(win, 0, 0);
@@ -109,7 +110,7 @@ void print_original(WINDOW* win, int quiz_flags)
     wrefresh(win);
 }
 
-// @print_keyboard
+// @print keyboard
 void print_keyboard(WINDOW* win)
 {
     box(win, 0, 0);
@@ -127,7 +128,8 @@ void print_keyboard(WINDOW* win)
     wrefresh(win);
 }
 
-// @print_input
+// @print input
+#define CONTROLS_OFFSET_X -6
 void print_input(WINDOW* win, int selected_vowel, int quiz_flags)
 {
     box(win, 0, 0);
@@ -139,7 +141,9 @@ void print_input(WINDOW* win, int selected_vowel, int quiz_flags)
     int y_center = rows / 2;
     int x_center = cols / 2;
 
-    mvwaddwstr(win, y_center, x_center, ipa_vowels[selected_vowel].utf8);
+    mvwaddwstr(win, y_center, x_center + CONTROLS_OFFSET_X, ipa_vowels[selected_vowel].utf8);
+    if (selected_vowel < VOWEL_FIRST_DIPTHONG )
+            mvwaddch(win, y_center, x_center + CONTROLS_OFFSET_X + 1, ' ');
 
     if (quiz_flags & QUIZ_FLAGS_SHOW_OPTIONS_BIT) 
     {
@@ -160,26 +164,26 @@ void print_input(WINDOW* win, int selected_vowel, int quiz_flags)
 
     wrefresh(win);
 }
-// @process_input
+// @process input
 #define INPUT_MAX_LENGTH 128
 char user_string[INPUT_MAX_LENGTH];
-void process_input(WINDOW* win, ma_engine* sound_engine_ptr, int* quiz_flags, int random_int, int* random_int_out)
+int process_input(WINDOW* win, ma_engine* sound_engine_ptr, int* quiz_flags, int random_int, int* random_int_out)
 {
-	/*QUIZ_FLAGS_SHOW_IPA_KEY_BIT    1
-          QUIZ_FLAGS_SHOW_OPTIONS_BIT    2
-          QUIZ_FLAGS_SINGLE_KEY_MODE_BIT 4*/
+    int center_y = getmaxy(win) / 2;
+    int center_x = getmaxx(win) / 2;
+
     int c;
     if (*quiz_flags & QUIZ_FLAGS_SINGLE_KEY_MODE_BIT)
     {
-            wmove(win, getmaxy(win) / 2 + 2, getmaxx(win) / 2);
+            mvwaddwstr(win, center_y + 2, center_x + CONTROLS_OFFSET_X - 1, L"  ");
+            wmove(win, center_y + 2, center_x + CONTROLS_OFFSET_X);
 	    c = wgetch(win);
             switch (c)
             {
 		    case KEY_RESIZE:
-			    return;
+			    return KEY_RESIZE;
                     case ':':
-                            mvwaddwstr(win, getmaxy(win) / 2 + 2, getmaxx(win) / 2 - 1, L": ");
-			    //wrefresh(win);
+                            mvwaddwstr(win, center_y + 2, center_x + CONTROLS_OFFSET_X - 1, L": ");
                 	    break;
 		    case 'f':
 		    case 'g':
@@ -210,38 +214,58 @@ void process_input(WINDOW* win, ma_engine* sound_engine_ptr, int* quiz_flags, in
 	                    {
 	                            ma_engine_play_sound(sound_engine_ptr, "African1.mp3", NULL);
 	                    }
-			    return;
+			    return 0;
 	            default:
                             ma_engine_play_sound(sound_engine_ptr, "Abstract2.mp3", NULL);
-	            	    return;
+	            	    return 0;
             }
     }
-    mvwgetnstr(win, getmaxy(win) / 2 + 2, getmaxx(win) / 2, user_string, INPUT_MAX_LENGTH - 1);
+    // @get user string
+    mvwgetnstr(win, center_y + 2, center_x + CONTROLS_OFFSET_X, user_string, INPUT_MAX_LENGTH - 1);
     c = user_string[0];
 
-    if (strlen(user_string) == 1)
+    const int user_string_length = strlen(user_string);
+    if (user_string_length == 1)
     {
             switch (c)
             {
                     case 'q':
-                	    return;
+                	    return 'q';
                     case 'h':
                 	    *quiz_flags ^= QUIZ_FLAGS_SHOW_IPA_KEY_BIT;
-                	    return;
+                	    return 'h';
                     case '?':
                 	    *quiz_flags ^= QUIZ_FLAGS_SHOW_OPTIONS_BIT;
-                	    return;
+
+                            int rows = getmaxy(win);
+                            int cols = getmaxx(win);
+	                    mvwaddwstr(win, rows - 6, cols - 18, L"                  ");
+	                    mvwaddwstr(win, rows - 5, cols - 18, L"                  ");
+	                    mvwaddwstr(win, rows - 4, cols - 18, L"                  ");
+	                    mvwaddwstr(win, rows - 3, cols - 18, L"                  ");
+	                    mvwaddwstr(win, rows - 2, cols - 18, L"                  ");
+	                    mvwaddwstr(win, rows - 1, cols - 18, L"                  ");
+                	    return '?';
                     case 'm':
                 	    *quiz_flags ^= QUIZ_FLAGS_SINGLE_KEY_MODE_BIT;
-                	    return;
+                	    return 'm';
             }
     }
+
+    // @clear user input from screen
+    
+    if (user_string_length > 10)
+	    wclear(win);
+    else
+	    for (int i = 0; i < INPUT_MAX_LENGTH; i++)
+                            mvwaddch(win, center_y + 2, center_x + CONTROLS_OFFSET_X - 1 + i, ' ');
+
     ma_result result;
     if (vowel_exists(user_string) == 0)
     {
             result = ma_engine_play_sound(sound_engine_ptr, "Abstract2.mp3", NULL);
 	    if (result != MA_SUCCESS)
-			    return;
+			    return -1;
     }
     else
     {
@@ -255,18 +279,20 @@ void process_input(WINDOW* win, ma_engine* sound_engine_ptr, int* quiz_flags, in
 
 	            result = ma_engine_play_sound(sound_engine_ptr, ipa_vowels[random_int].sound, NULL);
 	                    if (result != MA_SUCCESS)
-	                            return;
+	                            return 0;
 	    }
 	    else
 	    {
 	            result = ma_engine_play_sound(sound_engine_ptr, "African1.mp3", NULL);
 	            if (result != MA_SUCCESS)
-	                    return;
+	                    return 0;
 	    }
     }
+
+    return 0;
 }
 
-// @print_menu
+// @print menu
 void print_menu(WINDOW* win, int selected_mode)
 {
     box(win, 0, 0);
@@ -312,26 +338,30 @@ int main(int argc, char** argv)
     srand(time(0));
 
     int vowel_index_selected = rand() % VOWEL_COUNT;
-    while (strcmp(user_string, "q") != 0)
+    int c = 0;
+    while (c != 'q')
     {
-            getmaxyx(stdscr, rows, cols);
-	    wresize(win_orig, rows, orig_x );
-	    wresize(win_keyboard, keyboard_y, cols - orig_x );
-	    wresize(win_input, rows - keyboard_y, cols - orig_x - menu_x);
-	    wresize(win_menu, rows - keyboard_y, menu_x);
-	    mvwin(win_menu, keyboard_y, cols - menu_x);
+	    if (c == KEY_RESIZE)
+	    {
+                    getmaxyx(stdscr, rows, cols);
+	            wresize(win_orig, rows, orig_x );
+	            wresize(win_keyboard, keyboard_y, cols - orig_x );
+	            wresize(win_input, rows - keyboard_y, cols - orig_x - menu_x);
+	            wresize(win_menu, rows - keyboard_y, menu_x);
+	            mvwin(win_menu, keyboard_y, cols - menu_x);
 
-	    wclear(win_orig);
-	    wclear(win_keyboard);
-	    wclear(win_input);
-	    wclear(win_menu);
+	            wclear(win_orig);
+	            wclear(win_keyboard);
+	            wclear(win_menu);
+	            wclear(win_input);
+	    }
 
             print_original(win_orig, quiz_flags);
 	    print_keyboard(win_keyboard);
-	    print_input(win_input, vowel_index_selected, quiz_flags);
 	    print_menu(win_menu, (quiz_flags & QUIZ_FLAGS_SINGLE_KEY_MODE_BIT) >> 2);
+	    print_input(win_input, vowel_index_selected, quiz_flags);
 
-	    process_input(win_input, &engine, &quiz_flags, vowel_index_selected, &vowel_index_selected);
+	    c = process_input(win_input, &engine, &quiz_flags, vowel_index_selected, &vowel_index_selected);
 
 	    refresh();
     }
