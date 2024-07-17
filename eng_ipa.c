@@ -55,32 +55,32 @@
 #define QUIZ_FLAGS_SINGLE_KEY_MODE_BIT 4
 int quiz_flags = QUIZ_FLAGS_SHOW_IPA_KEY_BIT | QUIZ_FLAGS_SHOW_OPTIONS_BIT | QUIZ_FLAGS_SINGLE_KEY_MODE_BIT;
 
-typedef struct vowel {
-	wchar_t* utf8;
-	char*    ascii;
-	char*    sound;
+typedef struct allophone {
+	wchar_t* ipa_str;
+	char*    ascii_str;
+	char*    sound_file_path_str;
+	int      flags;
 	char     key;
-} vowel;
+} allophone;
 
-// @vowels
-#define VOWEL_COUNT          15
-#define VOWEL_FIRST_DIPTHONG 10
-const vowel ipa_vowels[VOWEL_COUNT] = {
-    { L"ə", "of", "of.mp3", 'f' },
-    { L"ɹ", "work", "work.mp3", 'g' },
-    { L"ɪ", "with", "with.mp3", 's' },
-    { L"i", "be", "be.mp3", 'a' },
-    { L"ɛ", "get", "get.mp3", 'd' },
-    { L"æ", "map", "map.mp3", 'h' },
-    { L"u", "who", "who.mp3", 'l' },
-    { L"ɑ", "on", "on.mp3", 'j' },
-    { L"ɔ", "more", "more.mp3", 'k' },
-    { L"ʊ", "good", "good.mp3", ';' },
-    { L"eɪ", "they", "they.mp3", 'e' },
-    { L"aɪ", "by", "by.mp3", 'u' },
-    { L"oʊ", "most", "most.mp3", 'c' },
-    { L"aʊ", "how", "how.mp3", 'm' },
-    { L"ɔɪ", "point", "point.mp3", 'i' },
+// @allophones
+#define ALLOPHONE_COUNT 15
+const allophone allophones[ALLOPHONE_COUNT] = {
+    { L"ə", "of", "of.mp3", 0, 'f' },
+    { L"ɹ", "work", "work.mp3", 0, 'g' },
+    { L"ɪ", "with", "with.mp3", 0, 's' },
+    { L"i", "be", "be.mp3", 0, 'a' },
+    { L"ɛ", "get", "get.mp3", 0, 'd' },
+    { L"æ", "map", "map.mp3", 0, 'h' },
+    { L"u", "who", "who.mp3", 0, 'l' },
+    { L"ɑ", "on", "on.mp3", 0, 'j' },
+    { L"ɔ", "more", "more.mp3", 0, 'k' },
+    { L"ʊ", "good", "good.mp3", 0, ';' },
+    { L"eɪ", "they", "they.mp3", 0, 'e' },
+    { L"aɪ", "by", "by.mp3", 0, 'u' },
+    { L"oʊ", "most", "most.mp3", 0, 'c' },
+    { L"aʊ", "how", "how.mp3", 0, 'm' },
+    { L"ɔɪ", "point", "point.mp3", 0, 'i' },
 };
 
 // @vowel exists
@@ -88,7 +88,7 @@ int vowel_exists(char* user_string)
 {
     for (int i = 0; i < 15; i++)
     {
-	    if (strcmp(ipa_vowels[i].ascii, user_string) == 0)
+	    if (strcmp(allophones[i].ascii_str, user_string) == 0)
                      	    return 1;
     }
     return 0;
@@ -100,11 +100,11 @@ void print_original(WINDOW* win, int quiz_flags)
     box(win, 0, 0);
 
     int rows = getmaxy(win);
-    for (int i = 0; i < VOWEL_COUNT; i++)
+    for (int i = 0; i < ALLOPHONE_COUNT ; i++)
     {
-	    int y_offset = rows / 2 - VOWEL_COUNT / 2 + i;
-            mvwaddwstr(win, y_offset, 2, (quiz_flags & QUIZ_FLAGS_SHOW_IPA_KEY_BIT) ? ipa_vowels[i].utf8 : L"?");
-            mvwaddstr(win, y_offset, 5, ipa_vowels[i].ascii);
+	    int y_offset = rows / 2 - ALLOPHONE_COUNT / 2 + i;
+            mvwaddwstr(win, y_offset, 2, (quiz_flags & QUIZ_FLAGS_SHOW_IPA_KEY_BIT) ? allophones[i].ipa_str : L"? ");
+            mvwaddstr(win, y_offset, 5, allophones[i].ascii_str);
     }
 
     wrefresh(win);
@@ -134,16 +134,14 @@ void print_input(WINDOW* win, int selected_vowel, int quiz_flags)
 {
     box(win, 0, 0);
 
-    selected_vowel %= VOWEL_COUNT;
+    selected_vowel %= ALLOPHONE_COUNT;
 
     int rows = getmaxy(win);
     int cols = getmaxx(win);
     int y_center = rows / 2;
     int x_center = cols / 2;
 
-    mvwaddwstr(win, y_center, x_center + CONTROLS_OFFSET_X, ipa_vowels[selected_vowel].utf8);
-    if (selected_vowel < VOWEL_FIRST_DIPTHONG )
-            mvwaddch(win, y_center, x_center + CONTROLS_OFFSET_X + 1, ' ');
+    mvwprintw(win, y_center, x_center + CONTROLS_OFFSET_X, "%-2.2ls", allophones[selected_vowel].ipa_str);
 
     if (quiz_flags & QUIZ_FLAGS_SHOW_OPTIONS_BIT) 
     {
@@ -200,15 +198,15 @@ int process_input(WINDOW* win, ma_engine* sound_engine_ptr, int* quiz_flags, int
 		    case 'c':
 		    case 'm':
 		    case 'i':
-	                    if (c == ipa_vowels[random_int].key)
+	                    if (c == allophones[random_int].key)
 	                    {
 	                            int new_random_int = random_int;
                                     while (new_random_int == random_int)
-	                        	    new_random_int = rand() % VOWEL_COUNT;
+	                        	    new_random_int = rand() % ALLOPHONE_COUNT;
 
 	                            *random_int_out = random_int = new_random_int;
 
-	                            ma_engine_play_sound(sound_engine_ptr, ipa_vowels[random_int].sound, NULL);
+	                            ma_engine_play_sound(sound_engine_ptr, allophones[random_int].sound_file_path_str, NULL);
 	                    }
 	                    else
 	                    {
@@ -269,15 +267,15 @@ int process_input(WINDOW* win, ma_engine* sound_engine_ptr, int* quiz_flags, int
     }
     else
     {
-	    if (strcmp(user_string, ipa_vowels[random_int].ascii) == 0)
+	    if (strcmp(user_string, allophones[random_int].ascii_str) == 0)
 	    {
 		    int new_random_int = random_int;
                     while (new_random_int == random_int)
-			    new_random_int = rand() % VOWEL_COUNT;
+			    new_random_int = rand() % ALLOPHONE_COUNT;
 
 	            *random_int_out = random_int = new_random_int;
 
-	            result = ma_engine_play_sound(sound_engine_ptr, ipa_vowels[random_int].sound, NULL);
+	            result = ma_engine_play_sound(sound_engine_ptr, allophones[random_int].sound_file_path_str, NULL);
 	                    if (result != MA_SUCCESS)
 	                            return 0;
 	    }
@@ -337,7 +335,7 @@ int main(int argc, char** argv)
 
     srand(time(0));
 
-    int vowel_index_selected = rand() % VOWEL_COUNT;
+    int vowel_index_selected = rand() % ALLOPHONE_COUNT;
     int c = 0;
     while (c != 'q')
     {
