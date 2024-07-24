@@ -17,7 +17,7 @@
          ╭─┴─┬─┴─╮ ╰───┴───┴───┴───╯
  Column  │ C │ V │  View
          ╰───┴───╯
-┌─────────────────────┐┌──── XW 
+┌────────────────── XW ┌─────┐
 │ A moose crossed the ││     │
 │ road and he was the NQ     │
 │ biggest I ever saw. ││     │
@@ -141,7 +141,8 @@ void print_input(WINDOW* win, int selected_vowel, int quiz_flags)
     int y_center = rows / 2;
     int x_center = cols / 2;
 
-    mvwprintw(win, y_center, x_center + CONTROLS_OFFSET_X, "%-2.2ls", allophones[selected_vowel].ipa_str);
+    mvwprintw(win, y_center, x_center + CONTROLS_OFFSET_X, "  ");
+    mvwprintw(win, y_center, x_center + CONTROLS_OFFSET_X, "%-2ls", allophones[selected_vowel].ipa_str);
 
     if (quiz_flags & QUIZ_FLAGS_SHOW_OPTIONS_BIT) 
     {

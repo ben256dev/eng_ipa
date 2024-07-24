@@ -7,9 +7,11 @@ eɪŋ  dang
 ɔr   or             
 ɛr   bear           
 ir   fear           
+/*
 ɛrɪŋ bearing        
 irɪŋ fearing        
 ɔrɹ  poorer         
+*/
 æ    as             
 ɑ    on             
 oʊ   so             
@@ -22,7 +24,10 @@ i    be
 ʊ    good           
 u    who            
 aɪ   by             
-aʊ   how            
+æʊ   how            
 ɔɪ   point          
 ɾ    it'll          
 ʔ    at             
+.    pizza
+oʊ   soul
+ɨ    is it
